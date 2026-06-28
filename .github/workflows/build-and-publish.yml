@@ -1,0 +1,38 @@
+# Build and publish the executable with CMake to Releases on GitHub when a new tag is pushed.
+name: Build and Publish
+
+on:
+  push:
+    tags:
+      - '*'
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+    - name: Package
+      run: cpack -C ${{env.BUILD_TYPE}} -B ${{github.workspace}}/build
+        
+    - name: Create Release
+    id: create_release
+    uses: actions/create-release@v1
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    with:
+      tag_name: ${{ github.ref_name }}
+      release_name: Release ${{ github.ref_name }}
+      draft: false
+      prerelease: false
+
